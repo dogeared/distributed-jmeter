@@ -1,0 +1,7 @@
+#cloud-config
+runcmd:
+  - apt-get update
+  - apt install -y openjdk-8-jre-headless
+  - wget http://mirror.reverse.net/pub/apache/jmeter/binaries/apache-jmeter-3.2.tgz
+  - tar xvfz apache-jmeter-3.2.tgz
+  - echo "export PATH=$PATH:/apache-jmeter-3.2/bin" >> /root/.bashrc
