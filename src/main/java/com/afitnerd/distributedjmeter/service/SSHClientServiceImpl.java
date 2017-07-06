@@ -20,14 +20,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 @Service
-public class SSHClientImpl implements SSHClient {
+public class SSHClientServiceImpl implements SSHClientService {
 
     @Value("#{ @environment['ssh.private.key.file'] }")
     protected String sshPrivateKeyFile;
 
     private JSch jsch;
 
-    private static final Logger log = LoggerFactory.getLogger(SSHClientImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(SSHClientServiceImpl.class);
 
     @PostConstruct
     void setup() throws JSchException {
@@ -35,7 +35,7 @@ public class SSHClientImpl implements SSHClient {
         jsch.addIdentity(sshPrivateKeyFile);
     }
 
-    public void command(String command, String user, String host) throws JSchException, IOException {
+    public String command(String command, String user, String host) throws JSchException, IOException {
         Session session=jsch.getSession(user, host, 22);
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();
@@ -46,11 +46,13 @@ public class SSHClientImpl implements SSHClient {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         channel.connect();
         String line = null;
+        StringBuilder ret = new StringBuilder();
         while ((line = reader.readLine()) != null) {
-            log.info(line);
+            ret.append(line + "\n");
         }
         channel.disconnect();
         session.disconnect();
+        return ret.toString();
     }
 
     public void scp(String localFile, String remoteFile, String user, String host) throws JSchException, IOException {

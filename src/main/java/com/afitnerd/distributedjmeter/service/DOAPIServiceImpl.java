@@ -1,16 +1,17 @@
 package com.afitnerd.distributedjmeter.service;
 
 import com.afitnerd.distributedjmeter.model.request.CreateDropletRequest;
+import com.afitnerd.distributedjmeter.model.response.Droplet;
 import com.afitnerd.distributedjmeter.model.response.DropletResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -36,10 +37,14 @@ public class DOAPIServiceImpl implements DOAPIService {
     protected String doConfigFile;
 
     @Value("#{ @environment['do.firewall.id'] }")
-    protected String firewallId;
+    protected String doFirewallId;
+
+    @Autowired
+    SSHClientService sshClientService;
 
     private static final String DO_API_BASE_URL = "https://api.digitalocean.com/v2";
     private static final String DO_DROPLET_ENDPOINT = "/droplets";
+    private static final String DO_FIREWALL_ENDPOINT = "/firewalls";
 
     private ObjectMapper mapper = new ObjectMapper();
     private TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
@@ -49,7 +54,14 @@ public class DOAPIServiceImpl implements DOAPIService {
 
     @Override
     public DropletResponse listDroplets() throws IOException {
-        HttpResponse response = Request.Get(DO_API_BASE_URL + DO_DROPLET_ENDPOINT)
+        return listDroplets(null);
+    }
+
+    @Override
+    public DropletResponse listDroplets(String tagName) throws IOException {
+        String url = DO_API_BASE_URL + DO_DROPLET_ENDPOINT + "?per_page=200";
+        if (tagName != null) { url += "&tag_name=" + tagName; }
+        HttpResponse response = Request.Get(url)
             .addHeader("Authorization", "Bearer " + doToken)
             .addHeader("Content-type", "application/json")
             .execute()
@@ -59,16 +71,31 @@ public class DOAPIServiceImpl implements DOAPIService {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<String> getDropletIps() throws IOException {
-        return listDroplets().getDroplets().stream().map(elem -> {
+        return getDropletIps((String) null);
+    }
+
+    @Override
+    public List<String> getDropletIps(String tagName) throws IOException {
+        return getDropletIps(listDroplets(tagName).getDroplets());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<String> getDropletIps(List<Droplet> droplets) {
+        return droplets.stream().map(elem -> {
             return elem.getDropletNetworks().getV4s().get(0).getIpAddress();
         }).collect(Collectors.toList());
     }
 
     @Override
     public List<Object> getDropletsAttribute(String attribute) throws IOException {
-        return listDroplets().getDroplets().stream().map(elem -> {
+        return getDropletsAttribute(listDroplets().getDroplets(), attribute);
+    }
+
+    @Override
+    public List<Object> getDropletsAttribute(List<Droplet> droplets, String attribute) {
+        return droplets.stream().map(elem -> {
             try {
                 return PropertyUtils.getProperty(elem, attribute);
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -122,7 +149,13 @@ public class DOAPIServiceImpl implements DOAPIService {
         return mapper.readValue(response.getEntity().getContent(), dropletTypeRef);
     }
 
-    public String addDropletsToFirewall(List<Long> dropletIds) {
-        return null;
+    @Override
+    public void addDropletsToFirewall(Map<String, List<Object>> dropletIds) throws IOException {
+        HttpResponse response = Request.Post(DO_API_BASE_URL + DO_FIREWALL_ENDPOINT + "/" + doFirewallId + DO_DROPLET_ENDPOINT)
+            .addHeader("Authorization", "Bearer " + doToken)
+            .addHeader("Content-type", "application/json")
+            .body(new StringEntity(mapper.writeValueAsString(dropletIds)))
+            .execute()
+            .returnResponse();
     }
 }
