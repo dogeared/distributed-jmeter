@@ -13,5 +13,6 @@ public interface JMeterService {
 
     List<DropletResponse> createJMeterServerDroplets(int numDroplets, String size);
     Map<String, Object> checkJMeterServerDropletsActive(int numDroplets) throws IOException, JSchException;
+    void addJMeterServersToFirewall() throws IOException;
     String jMeterServersStart() throws IOException, JSchException;
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +77,8 @@ public class JMeterServiceImpl implements JMeterService {
         // check for jmeter install
         List<String> ips = doapiService.getDropletIps(dropletResponse.getDroplets());
         for (String ip : ips) {
-            String result = sshClientService.command("ls /apache-jmeter-3.2/bin", "root", ip);
-            if (result == null || result.contains("No such file")) {
+            String result = sshClientService.command("jmeter-server --version", "root", ip);
+            if (result == null || result.contains("currently not installed")) {
                 ret.put("all_jmeter", false);
                 return ret;
             }
@@ -88,15 +89,15 @@ public class JMeterServiceImpl implements JMeterService {
     }
 
     @Override
+    public void addJMeterServersToFirewall() throws IOException {
+        doapiService.addDropletsToFirewallByTags(Arrays.asList(JMETER_SERVER_BASE));
+    }
+
+    @Override
     public String jMeterServersStart() throws IOException, JSchException {
         DropletResponse dropletResponse = doapiService.listDroplets(JMETER_SERVER_BASE);
-        List<Object> ids = doapiService.getDropletsAttribute(dropletResponse.getDroplets(), "id");
         long dropletMemory = dropletResponse.getDroplets().get(0).getMemory();
         int jvmMemory = (int)(dropletMemory*0.75f);
-
-        Map<String, List<Object>> firewallList = new HashMap<>();
-        firewallList.put("droplet_ids", ids);
-        doapiService.addDropletsToFirewall(firewallList);
 
         List<String> ips = doapiService.getDropletIps(dropletResponse.getDroplets());
 

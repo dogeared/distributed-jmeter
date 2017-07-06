@@ -75,6 +75,17 @@ public class DistributedJmeterApplication implements CommandLineRunner {
             Thread.sleep(5000);
         }
 
+        log.info("Adding JMeter Servers to Firewall");
+        Future<String> addJMeterToFirewallFuture = jMeterAsyncConfig.addJMeterServersToFirewall();
+        while (true) {
+            if (addJMeterToFirewallFuture.isDone()) {
+                log.info("Added JMeter Servers to Firewall.");
+                break;
+            }
+            log.info("... Still adding JMeter Servers to Firewall ...");
+            Thread.sleep(1000);
+        }
+
         log.info("Starting JMeter Servers");
         Future<String> startJMeterFuture = jMeterAsyncConfig.jMeterServersStart();
         while (true) {

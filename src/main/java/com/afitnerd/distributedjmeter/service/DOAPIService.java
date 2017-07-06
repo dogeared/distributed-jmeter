@@ -20,5 +20,6 @@ public interface DOAPIService {
     List<Object> getDropletsAttribute(List<Droplet> droplets, String attribute);
     DropletResponse createDroplets(CreateDropletRequest request) throws IOException;
     List<Map<String, Object>> getDropletsAttributes(List<String> attributes) throws IOException;
-    void addDropletsToFirewall(Map<String, List<Object>> dropletIds) throws IOException;
+    void addDropletsToFirewall(List<Object> dropletIds) throws IOException;
+    void addDropletsToFirewallByTags(List<String> tags) throws IOException;
 }

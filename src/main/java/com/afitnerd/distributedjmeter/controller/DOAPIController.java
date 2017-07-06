@@ -57,7 +57,7 @@ public class DOAPIController {
     }
 
     @RequestMapping(value = "/firewalls", method = RequestMethod.POST)
-    @ResponseBody void addDropletsToFirewall(@RequestBody Map<String, List<Object>> dropletIds) throws IOException {
+    @ResponseBody void addDropletsToFirewall(@RequestBody List<Object> dropletIds) throws IOException {
         doapiService.addDropletsToFirewall(dropletIds);
     }
 }

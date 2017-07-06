@@ -39,6 +39,12 @@ public class JMeterAsyncConfig {
     }
 
     @Async
+    public Future<String> addJMeterServersToFirewall() throws IOException {
+        jMeterService.addJMeterServersToFirewall();
+        return new AsyncResult<>("added jmeter servers to firewall");
+    }
+
+    @Async
     public Future<String> jMeterServersStart() throws IOException, JSchException {
         return new AsyncResult<>(jMeterService.jMeterServersStart());
     }

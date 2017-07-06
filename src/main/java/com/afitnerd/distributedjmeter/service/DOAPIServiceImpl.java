@@ -150,12 +150,26 @@ public class DOAPIServiceImpl implements DOAPIService {
     }
 
     @Override
-    public void addDropletsToFirewall(Map<String, List<Object>> dropletIds) throws IOException {
+    public void addDropletsToFirewall(List<Object> dropletIds) throws IOException {
+        Map<String, List<Object>> body = new HashMap<>();
+        body.put("droplet_ids", dropletIds);
         HttpResponse response = Request.Post(DO_API_BASE_URL + DO_FIREWALL_ENDPOINT + "/" + doFirewallId + DO_DROPLET_ENDPOINT)
             .addHeader("Authorization", "Bearer " + doToken)
             .addHeader("Content-type", "application/json")
-            .body(new StringEntity(mapper.writeValueAsString(dropletIds)))
+            .body(new StringEntity(mapper.writeValueAsString(body)))
             .execute()
             .returnResponse();
+    }
+
+    @Override
+    public void addDropletsToFirewallByTags(List<String> tags) throws IOException {
+        Map<String, List<String>> body = new HashMap<>();
+        body.put("tags", tags);
+        HttpResponse response = Request.Post(DO_API_BASE_URL + DO_FIREWALL_ENDPOINT + "/" + doFirewallId + "/tags")
+                .addHeader("Authorization", "Bearer " + doToken)
+                .addHeader("Content-type", "application/json")
+                .body(new StringEntity(mapper.writeValueAsString(body)))
+                .execute()
+                .returnResponse();
     }
 }
