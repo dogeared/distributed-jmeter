@@ -110,13 +110,18 @@ public class JMeterServiceImpl implements JMeterService {
             int numTries = 0;
             do {
                 sshClientService.command(uniqueCommand, "root", ip);
-                String result = sshClientService.command("ps auxw | grep jmeter", "root", ip);
-                if (result != null && result.split("\n").length >2) {
+                String result = sshClientService.command("ps auxw | grep jmeter-server", "root", ip);
+                if (result != null && result.split("\n").length > 2) {
                     break;
                 }
-            } while (numTries++ < 20);
-            if (numTries >= 20) {
-                log.error("jmeter server not started after 20 tries for: {}", ip);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    log.error("Failed to sleep: {}", e.getMessage(), e);
+                }
+            } while (numTries++ < 200);
+            if (numTries >= 200) {
+                log.error("jmeter server not started after 200 tries for: {}", ip);
             }
         }
 

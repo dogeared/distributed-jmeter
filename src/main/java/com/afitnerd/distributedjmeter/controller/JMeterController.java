@@ -23,8 +23,7 @@ public class JMeterController {
     JMeterService jMeterService;
 
     @RequestMapping(value = "/jmeter_server_create", method = RequestMethod.POST)
-    @ResponseBody
-    List<DropletResponse> jmeterServerCreate(@RequestBody Map<String, Object> parms) throws IOException {
+    @ResponseBody List<DropletResponse> jmeterServerCreate(@RequestBody Map<String, Object> parms) throws IOException {
         return jMeterService.createJMeterServerDroplets((Integer) parms.get("num_droplets"), (String) parms.get("size"));
     }
 
