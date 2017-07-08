@@ -5,6 +5,7 @@ import com.afitnerd.distributedjmeter.model.request.CreateDropletRequestBuilder;
 import com.afitnerd.distributedjmeter.model.response.Droplet;
 import com.afitnerd.distributedjmeter.model.response.DropletResponse;
 import com.afitnerd.distributedjmeter.util.DODropletNameUtil;
+import com.afitnerd.distributedjmeter.util.JMeterCommandUtil;
 import com.jcraft.jsch.JSchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +95,44 @@ public class JMeterServiceImpl implements JMeterService {
     }
 
     @Override
+    public void addJMeterClientToFirewall() throws IOException {
+        doapiService.addDropletsToFirewallByTags(Arrays.asList(JMETER_CLIENT));
+    }
+
+    @Override
+    public String jMeterClientStart(String remoteIps) throws IOException, JSchException {
+        DropletResponse dropletResponse = doapiService.listDroplets(JMETER_CLIENT);
+        if (dropletResponse == null || dropletResponse.getDroplets() == null || dropletResponse.getDroplets().size() == 0 || dropletResponse.getDroplets().size() > 1) {
+            log.error("Problem with retrieving jmeter client droplet.");
+            return null;
+        }
+        Droplet droplet = dropletResponse.getDroplets().get(0);
+        long dropletMemory = droplet.getMemory();
+        int jvmMemory = (int)(dropletMemory*0.75f);
+        String localIp = droplet.getDropletNetworks().getV4s().get(0).getIpAddress();
+
+        String command = JMeterCommandUtil.clientCommand(jvmMemory, remoteIps, localIp);
+        int numTries = 0;
+        do {
+            sshClientService.command(command, "root", localIp);
+            String result = sshClientService.command("ps auxw | grep jmeter", "root", localIp);
+            if (result != null && result.split("\n").length > 2) {
+                break;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                log.error("Failed to sleep: {}", e.getMessage(), e);
+            }
+        } while (numTries++ < 200);
+        if (numTries >= 200) {
+            log.error("jmeter client not started after 200 tries for: {}", localIp);
+            return null;
+        }
+        return localIp;
+    }
+
+    @Override
     public String jMeterServersStart() throws IOException, JSchException {
         DropletResponse dropletResponse = doapiService.listDroplets(JMETER_SERVER_BASE);
         long dropletMemory = dropletResponse.getDroplets().get(0).getMemory();
@@ -101,16 +140,11 @@ public class JMeterServiceImpl implements JMeterService {
 
         List<String> ips = doapiService.getDropletIps(dropletResponse.getDroplets());
 
-        String command = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/apache-jmeter-3.2/bin " +
-                "JVM_ARGS=\"-Xms"+ jvmMemory + "m -Xmx" + jvmMemory + "m\" " +
-                "nohup jmeter-server -Dserver.rmi.localport=4040 -Djava.rmi.server.hostname={ip} " +
-                "> /tmp/jmeter-server.log 2>&1 &";
-
         for (String ip : ips) {
-            String uniqueCommand = command.replace("{ip}", ip);
+            String command = JMeterCommandUtil.serverCommand(jvmMemory, ip);
             int numTries = 0;
             do {
-                sshClientService.command(uniqueCommand, "root", ip);
+                sshClientService.command(command, "root", ip);
                 String result = sshClientService.command("ps auxw | grep jmeter-server", "root", ip);
                 if (result != null && result.split("\n").length > 2) {
                     break;

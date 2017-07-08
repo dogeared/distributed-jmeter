@@ -10,9 +10,12 @@ import java.util.Map;
 public interface JMeterService {
 
     String JMETER_SERVER_BASE = "jmeter-server";
+    String JMETER_CLIENT = "jmeter-client";
 
     List<DropletResponse> createJMeterServerDroplets(int numDroplets, String size);
     Map<String, Object> checkJMeterServerDropletsActive(int numDroplets) throws IOException, JSchException;
+    void addJMeterClientToFirewall() throws IOException;
     void addJMeterServersToFirewall() throws IOException;
+    String jMeterClientStart(String remoteIps) throws IOException, JSchException;
     String jMeterServersStart() throws IOException, JSchException;
 }
