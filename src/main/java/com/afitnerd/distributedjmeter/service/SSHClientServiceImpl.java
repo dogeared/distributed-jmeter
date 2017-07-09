@@ -68,18 +68,28 @@ public class SSHClientServiceImpl implements SSHClientService {
 
         channel.connect();
 
+        if (checkAck(in) != 0) {
+            log.error("Error setting up scp {} to {}:{}", localFile, host, remoteFile);
+            return;
+        }
+
         File lfile = new File(localFile);
         long filesize = lfile.length();
         String command = "C0644 " + filesize + " " + remoteFile + "\n";
         out.write(command.getBytes());
         out.flush();
 
+        if (checkAck(in) != 0) {
+            log.error("Error executing: {}", command);
+            return;
+        }
+
         FileInputStream fis = new FileInputStream(localFile);
 
-        byte[] buf=new byte[1024];
+        byte[] buf = new byte[1024];
         while(true){
-            int len=fis.read(buf, 0, buf.length);
-            if(len<=0) break;
+            int len = fis.read(buf, 0, buf.length);
+            if(len <= 0) break;
             out.write(buf, 0, len);
         }
         fis.close();
@@ -87,9 +97,35 @@ public class SSHClientServiceImpl implements SSHClientService {
         buf[0]=0;
         out.write(buf, 0, 1);
         out.flush();
+
+        if (checkAck(in) != 0) {
+            log.error("Error completing file transfer.");
+            return;
+        }
+
         out.close();
 
         channel.disconnect();
         session.disconnect();
+    }
+
+    private int checkAck(InputStream in) throws IOException{
+        int b = in.read();
+        // b may be 0 for success,
+        //          1 for error,
+        //          2 for fatal error,
+        //          -1
+        if (b == 0 || b == -1) { return b; }
+
+        if (b == 1 || b == 2) {
+            StringBuffer sb = new StringBuffer();
+            int c;
+            do {
+                c = in.read();
+                sb.append((char)c);
+            } while(c != '\n');
+            log.error("Error transferring file: {}", sb.toString());
+        }
+        return b;
     }
 }

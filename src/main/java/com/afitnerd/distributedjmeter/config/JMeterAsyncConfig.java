@@ -27,10 +27,27 @@ public class JMeterAsyncConfig {
     }
 
     @Async
+    public Future<DropletResponse> createJMeterClientDroplet(String size) {
+        return new AsyncResult<>(jMeterService.createJMeterClientDroplet(size));
+    }
+
+    @Async
     public Future<Map<String, Object>> checkJMeterServerDropletsActive(int numDroplets) throws IOException, JSchException {
         Map<String, Object> result = null;
         while (true) {
             result = jMeterService.checkJMeterServerDropletsActive(numDroplets);
+            if (result.get("all_jmeter") != null && (boolean) result.get("all_jmeter")) {
+                break;
+            }
+        }
+        return new AsyncResult<>(result);
+    }
+
+    @Async
+    public Future<Map<String, Object>> checkJMeterClientDropletActive() throws IOException, JSchException {
+        Map<String, Object> result = null;
+        while (true) {
+            result = jMeterService.checkJMeterClientDropletActive();
             if (result.get("all_jmeter") != null && (boolean) result.get("all_jmeter")) {
                 break;
             }
@@ -45,7 +62,24 @@ public class JMeterAsyncConfig {
     }
 
     @Async
+    public Future<String> addJMeterClientToFirewall() throws IOException {
+        jMeterService.addJMeterClientToFirewall();
+        return new AsyncResult<>("added jmeter client to firewall");
+    }
+
+    @Async
     public Future<String> jMeterServersStart() throws IOException, JSchException {
         return new AsyncResult<>(jMeterService.jMeterServersStart());
+    }
+
+    @Async
+    public Future<String> jMeterClientCopyTestPlan() throws IOException, JSchException {
+        jMeterService.jMeterClientCopyTestPlan();
+        return new AsyncResult<>("copied over test plan for JMeter Client");
+    }
+
+    @Async
+    public Future<String> jMeterClientStart(String remoteIps) throws IOException, JSchException {
+        return new AsyncResult<>(jMeterService.jMeterClientStart(remoteIps));
     }
 }

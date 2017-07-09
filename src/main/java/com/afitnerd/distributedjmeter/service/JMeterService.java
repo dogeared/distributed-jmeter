@@ -13,9 +13,15 @@ public interface JMeterService {
     String JMETER_CLIENT = "jmeter-client";
 
     List<DropletResponse> createJMeterServerDroplets(int numDroplets, String size);
+    DropletResponse createJMeterClientDroplet(String size);
+
     Map<String, Object> checkJMeterServerDropletsActive(int numDroplets) throws IOException, JSchException;
-    void addJMeterClientToFirewall() throws IOException;
+    Map<String, Object> checkJMeterClientDropletActive() throws IOException, JSchException;
+
     void addJMeterServersToFirewall() throws IOException;
-    String jMeterClientStart(String remoteIps) throws IOException, JSchException;
+    void addJMeterClientToFirewall() throws IOException;
+
     String jMeterServersStart() throws IOException, JSchException;
+    void jMeterClientCopyTestPlan() throws IOException, JSchException;
+    String jMeterClientStart(String remoteIps) throws IOException, JSchException;
 }

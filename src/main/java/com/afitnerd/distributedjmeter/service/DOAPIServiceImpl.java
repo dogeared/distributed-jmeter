@@ -33,7 +33,7 @@ public class DOAPIServiceImpl implements DOAPIService {
     @Value("#{ @environment['ssh.public.key.fingerprint'] }")
     protected String sshKeyFingerprint;
 
-    @Value("#{ @environment['do.config.file.path'] }")
+    @Value("#{ @environment['do.config.file'] }")
     protected String doConfigFile;
 
     @Value("#{ @environment['do.firewall.id'] }")
