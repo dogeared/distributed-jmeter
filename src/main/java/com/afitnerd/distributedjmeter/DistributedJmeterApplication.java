@@ -2,6 +2,8 @@ package com.afitnerd.distributedjmeter;
 
 import com.afitnerd.distributedjmeter.config.JMeterAsyncConfig;
 import com.afitnerd.distributedjmeter.model.response.DropletResponse;
+import com.afitnerd.distributedjmeter.service.DOAPIService;
+import com.afitnerd.distributedjmeter.service.JMeterService;
 import com.jcraft.jsch.JSchException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -20,12 +22,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class DistributedJmeterApplication implements CommandLineRunner {
 
     @Autowired
     JMeterAsyncConfig jMeterAsyncConfig;
+
+    @Autowired
+    DOAPIService doapiService;
 
     private static final Logger log = LoggerFactory.getLogger(DistributedJmeterApplication.class);
 
@@ -36,12 +42,25 @@ public class DistributedJmeterApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         OptionSet options = parseCommandLine(args);
-        if (options != null) {
-            String remoteIps = doCommandLineServer(
+        if (options == null) { return; }
+
+        String remoteIps = null;
+        if (!options.has("client-only")) {
+            remoteIps = doCommandLineServer(
                 (int) options.valueOf("server-droplets"),
                 (String) options.valueOf("server-size")
             );
+        }
 
+        if (options.has("client-only")) {
+            remoteIps = getRemoteIps();
+        }
+
+        if (!options.has("server-only")) {
+            if (remoteIps == null) {
+                log.error("Remote IPs list is null. Cannot proceed.");
+                return;
+            }
             doCommandLineClient(
                 (String) options.valueOf("client-size"),
                 remoteIps
@@ -56,6 +75,13 @@ public class DistributedJmeterApplication implements CommandLineRunner {
         executor.setMaxPoolSize(10);
         executor.setQueueCapacity(25);
         return executor;
+    }
+
+    private String getRemoteIps() throws IOException {
+        log.info("Getting remote ips for tag: {}", JMeterService.JMETER_SERVER_BASE);
+        List<String> ips = doapiService.getDropletIps(JMeterService.JMETER_SERVER_BASE);
+        if (ips == null || ips.size() == 0) { return null; }
+        return ips.stream().collect(Collectors.joining(","));
     }
 
     private String doCommandLineServer(int serverDroplets, String serverSize) throws Exception {
@@ -170,15 +196,19 @@ public class DistributedJmeterApplication implements CommandLineRunner {
     private OptionSet parseCommandLine(String[] args) {
         OptionParser parser = new OptionParser() {
             {
+                accepts("server-only", "Only launch JMeter Servers");
+                accepts("client-only", "Only launch JMeter Client");
                 accepts("server-droplets", "Number of JMeter Server Droplets to create")
-                    .withRequiredArg().ofType(Integer.class)
-                    .required();
+                    .requiredIf("server-only")
+                    .requiredUnless("client-only")
+                    .withRequiredArg().ofType(Integer.class);
                 accepts("server-size", "The DigitOcean size of each droplet. Ex: 512mb, 1gb, 2gb, etc.")
-                    .withRequiredArg().ofType(String.class)
-                    .required();
+                    .requiredIf("server-only")
+                    .withRequiredArg().ofType(String.class);
                 accepts("client-size", "The DigitOcean size of the client droplet. Ex: 512mb, 1gb, 2gb, etc.")
-                    .withRequiredArg().ofType(String.class)
-                    .required();
+                    .requiredIf("client-only")
+                    .requiredUnless("server-only")
+                    .withRequiredArg().ofType(String.class);
             }
         };
 
