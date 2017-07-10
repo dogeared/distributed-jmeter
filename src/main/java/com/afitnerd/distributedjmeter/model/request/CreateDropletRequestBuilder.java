@@ -34,7 +34,7 @@ public class CreateDropletRequestBuilder {
         return this;
     }
 
-    public CreateDropletRequestBuilder image(String image) {
+    public CreateDropletRequestBuilder image(Integer image) {
         createDropletRequest.setImage(image);
         return this;
     }

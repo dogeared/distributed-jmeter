@@ -33,7 +33,10 @@ public class JMeterServiceImpl implements JMeterService {
     @Value("#{ @environment['jmeter.test.plan.file'] }")
     protected String jMeterTestPlanFile;
 
-    private static final int MAX_RETRIES = 100;
+    @Value("#{ @environment['do.image.id'] ?: 26136050 }") // id for ubuntu-16-04-x64
+    protected Integer doImageId;
+
+    private static final int MAX_RETRIES = 200;
 
     private static final Logger log = LoggerFactory.getLogger(JMeterServiceImpl.class);
 
@@ -56,7 +59,7 @@ public class JMeterServiceImpl implements JMeterService {
         CreateDropletRequest request = CreateDropletRequestBuilder.builder()
             .region("nyc3")
             .size(size)
-            .image("ubuntu-16-04-x64")
+            .image(doImageId)
             .backups(false)
             .ipv6(false)
             .addTag(tag)

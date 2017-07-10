@@ -12,7 +12,8 @@ public class CreateDropletRequest implements Serializable {
     List<String> names = new ArrayList<>();
     String region;
     String size;
-    String image;
+
+    Integer image;
 
     @JsonProperty("ssh_keys")
     List<String> sshKeys = new ArrayList<>();
@@ -53,11 +54,11 @@ public class CreateDropletRequest implements Serializable {
         this.size = size;
     }
 
-    public String getImage() {
+    public Integer getImage() {
         return image;
     }
 
-    public void setImage(String image) {
+    public void setImage(Integer image) {
         this.image = image;
     }
 

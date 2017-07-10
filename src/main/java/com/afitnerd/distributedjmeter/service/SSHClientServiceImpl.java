@@ -25,6 +25,8 @@ public class SSHClientServiceImpl implements SSHClientService {
     @Value("#{ @environment['ssh.private.key.file'] }")
     protected String sshPrivateKeyFile;
 
+    private static final int MAX_RETRIES = 200;
+
     private JSch jsch;
 
     private static final Logger log = LoggerFactory.getLogger(SSHClientServiceImpl.class);
@@ -35,78 +37,97 @@ public class SSHClientServiceImpl implements SSHClientService {
         jsch.addIdentity(sshPrivateKeyFile);
     }
 
-    public String command(String command, String user, String host) throws JSchException, IOException {
-        Session session=jsch.getSession(user, host, 22);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.connect();
-        Channel channel=session.openChannel("exec");
-        ((ChannelExec)channel).setCommand(command);
+    public String command(String command, String user, String host) {
+        int retry = 0;
+        do {
+            try {
+                Session session=jsch.getSession(user, host, 22);
+                session.setConfig("StrictHostKeyChecking", "no");
+                session.connect();
+                Channel channel=session.openChannel("exec");
+                ((ChannelExec)channel).setCommand(command);
 
-        InputStream is = channel.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        channel.connect();
-        String line = null;
-        StringBuilder ret = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-            ret.append(line + "\n");
-        }
-        channel.disconnect();
-        session.disconnect();
-        return ret.toString();
+                InputStream is = channel.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                channel.connect();
+                String line = null;
+                StringBuilder ret = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    ret.append(line + "\n");
+                }
+                channel.disconnect();
+                session.disconnect();
+                return ret.toString();
+            } catch (IOException | JSchException e) {
+                log.error("Caught ssh exception. Will retry. - {}", e.getMessage());
+            }
+        } while (retry++ < MAX_RETRIES);
+        log.error("retry max {} exceeded. Unable to continue.", MAX_RETRIES);
+        return null;
     }
 
-    public void scp(String localFile, String remoteFile, String user, String host) throws JSchException, IOException {
-        Session session=jsch.getSession(user, host, 22);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.connect();
-        Channel channel=session.openChannel("exec");
+    public void scp(String localFile, String remoteFile, String user, String host) {
+        int retry = 0;
+        do {
+            try {
 
-        ((ChannelExec)channel).setCommand("scp -t " + remoteFile);
+                Session session=jsch.getSession(user, host, 22);
+                session.setConfig("StrictHostKeyChecking", "no");
+                session.connect();
+                Channel channel=session.openChannel("exec");
 
-        OutputStream out = channel.getOutputStream();
-        InputStream in = channel.getInputStream();
+                ((ChannelExec)channel).setCommand("scp -t " + remoteFile);
 
-        channel.connect();
+                OutputStream out = channel.getOutputStream();
+                InputStream in = channel.getInputStream();
 
-        if (checkAck(in) != 0) {
-            log.error("Error setting up scp {} to {}:{}", localFile, host, remoteFile);
-            return;
-        }
+                channel.connect();
 
-        File lfile = new File(localFile);
-        long filesize = lfile.length();
-        String command = "C0644 " + filesize + " " + remoteFile + "\n";
-        out.write(command.getBytes());
-        out.flush();
+                if (checkAck(in) != 0) {
+                    log.error("Error setting up scp {} to {}:{}", localFile, host, remoteFile);
+                    return;
+                }
 
-        if (checkAck(in) != 0) {
-            log.error("Error executing: {}", command);
-            return;
-        }
+                File lfile = new File(localFile);
+                long filesize = lfile.length();
+                String command = "C0644 " + filesize + " " + remoteFile + "\n";
+                out.write(command.getBytes());
+                out.flush();
 
-        FileInputStream fis = new FileInputStream(localFile);
+                if (checkAck(in) != 0) {
+                    log.error("Error executing: {}", command);
+                    return;
+                }
 
-        byte[] buf = new byte[1024];
-        while(true){
-            int len = fis.read(buf, 0, buf.length);
-            if(len <= 0) break;
-            out.write(buf, 0, len);
-        }
-        fis.close();
-        fis = null;
-        buf[0]=0;
-        out.write(buf, 0, 1);
-        out.flush();
+                FileInputStream fis = new FileInputStream(localFile);
 
-        if (checkAck(in) != 0) {
-            log.error("Error completing file transfer.");
-            return;
-        }
+                byte[] buf = new byte[1024];
+                while(true){
+                    int len = fis.read(buf, 0, buf.length);
+                    if(len <= 0) break;
+                    out.write(buf, 0, len);
+                }
+                fis.close();
+                fis = null;
+                buf[0]=0;
+                out.write(buf, 0, 1);
+                out.flush();
 
-        out.close();
+                if (checkAck(in) != 0) {
+                    log.error("Error completing file transfer.");
+                    return;
+                }
 
-        channel.disconnect();
-        session.disconnect();
+                out.close();
+
+                channel.disconnect();
+                session.disconnect();
+                return;
+            } catch (IOException | JSchException e) {
+                log.error("Caught ssh exception. Will retry. - {}", e.getMessage());
+            }
+        } while (retry++ < MAX_RETRIES);
+        log.error("retry max {} exceeded. Unable to continue.", MAX_RETRIES);
     }
 
     private int checkAck(InputStream in) throws IOException{
