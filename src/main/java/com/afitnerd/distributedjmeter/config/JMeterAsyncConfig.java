@@ -18,8 +18,12 @@ import java.util.concurrent.Future;
 @EnableAsync
 public class JMeterAsyncConfig {
 
+    private final JMeterService jMeterService;
+
     @Autowired
-    JMeterService jMeterService;
+    public JMeterAsyncConfig(final JMeterService jMeterService) {
+        this.jMeterService = jMeterService;
+    }
 
     @Async
     public Future<List<DropletResponse>> createJMeterServerDroplets(int numDroplets, String size) {

@@ -12,7 +12,6 @@ public class CreateDropletRequest implements Serializable {
     List<String> names = new ArrayList<>();
     String region;
     String size;
-
     Integer image;
 
     @JsonProperty("ssh_keys")

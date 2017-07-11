@@ -24,12 +24,6 @@ import java.util.stream.Collectors;
 @Service
 public class JMeterServiceImpl implements JMeterService {
 
-    @Autowired
-    DOAPIService doapiService;
-
-    @Autowired
-    SSHClientService sshClientService;
-
     @Value("#{ @environment['jmeter.test.plan.file'] }")
     protected String jMeterTestPlanFile;
 
@@ -39,6 +33,15 @@ public class JMeterServiceImpl implements JMeterService {
     private static final int MAX_RETRIES = 200;
 
     private static final Logger log = LoggerFactory.getLogger(JMeterServiceImpl.class);
+
+    private final DOAPIService doapiService;
+    private final SSHClientService sshClientService;
+
+    @Autowired
+    private JMeterServiceImpl(final DOAPIService doapiService, final SSHClientService sshClientService) {
+        this.doapiService = doapiService;
+        this.sshClientService = sshClientService;
+    }
 
     @Override
     public List<DropletResponse> createJMeterServerDroplets(int numDroplets, String size) {

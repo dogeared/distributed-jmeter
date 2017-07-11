@@ -39,8 +39,12 @@ public class DOAPIServiceImpl implements DOAPIService {
     @Value("#{ @environment['do.firewall.id'] }")
     protected String doFirewallId;
 
+    private final SSHClientService sshClientService;
+
     @Autowired
-    SSHClientService sshClientService;
+    public DOAPIServiceImpl(final SSHClientService sshClientService) {
+        this.sshClientService = sshClientService;
+    }
 
     private static final String DO_API_BASE_URL = "https://api.digitalocean.com/v2";
     private static final String DO_DROPLET_ENDPOINT = "/droplets";
