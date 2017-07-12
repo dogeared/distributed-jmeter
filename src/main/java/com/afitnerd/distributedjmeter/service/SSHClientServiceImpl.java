@@ -33,8 +33,10 @@ public class SSHClientServiceImpl implements SSHClientService {
 
     @PostConstruct
     void setup() throws JSchException {
-        jsch=new JSch();
-        jsch.addIdentity(sshPrivateKeyFile);
+        jsch = new JSch();
+        if (sshPrivateKeyFile != null) {
+            jsch.addIdentity(sshPrivateKeyFile);
+        }
     }
 
     public String command(String command, String user, String host) {

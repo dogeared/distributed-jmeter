@@ -13,7 +13,7 @@ public class JMeterCommandUtil {
         fmt.format(COMMAND_BASE, jvmMemory, jvmMemory);
         fmt.format("nohup jmeter -n -t /root/IPIFY.jmx -l /root/log_remote.jtl -R%s ", remoteIps);
         fmt.format("-Djava.rmi.server.hostname=%s -Dclient.rmi.localport=4040 -Dserver.rmi.localport=4040 ", localIp);
-        sbuf.append("> /tmp/jmeter-client.log 2>&1 &");
+        sbuf.append("> /root/jmeter-client.log 2>&1 &");
         return sbuf.toString();
     }
 

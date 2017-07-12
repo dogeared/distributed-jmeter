@@ -4,9 +4,6 @@ import com.afitnerd.distributedjmeter.model.request.CreateDropletRequest;
 import com.afitnerd.distributedjmeter.model.response.Droplet;
 import com.afitnerd.distributedjmeter.model.response.DropletResponse;
 import com.afitnerd.distributedjmeter.service.DOAPIService;
-import com.afitnerd.distributedjmeter.service.SSHClientService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,17 +20,16 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 public class DOAPIController {
 
-    @Autowired
-    DOAPIService doapiService;
+    private final DOAPIService doapiService;
 
     @Autowired
-    SSHClientService sshClientService;
-
-    private static final Logger log = LoggerFactory.getLogger(DOAPIController.class);
+    public DOAPIController(final DOAPIService doapiService) {
+        this.doapiService = doapiService;
+    }
 
     @RequestMapping(value = "/droplets", method = RequestMethod.GET)
-    List<Droplet> listDroplets() throws IOException {
-        return doapiService.listDroplets().getDroplets();
+    List<Droplet> listDroplets(@RequestParam(required = false) String tagName) throws IOException {
+        return doapiService.listDroplets(tagName).getDroplets();
     }
 
     @RequestMapping(value = "/droplets", method = RequestMethod.POST)
@@ -41,9 +37,9 @@ public class DOAPIController {
         return doapiService.createDroplets(request);
     }
 
-    @RequestMapping("/droplet_ips")
-    @ResponseBody List<String> getDropletIps() throws IOException {
-      return doapiService.getDropletIps();
+    @RequestMapping(value = "/droplet_ips", method = RequestMethod.GET)
+    @ResponseBody List<String> getDropletIps(@RequestParam(required = false) String tagName) throws IOException {
+      return doapiService.getDropletIps(tagName);
     }
 
     @RequestMapping("/droplets_attribute")
