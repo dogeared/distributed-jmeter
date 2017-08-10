@@ -1,5 +1,6 @@
 package com.afitnerd.distributedjmeter.model.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -13,7 +14,9 @@ public class Droplet {
     int disk;
     boolean locked;
     String status;
-    String kernel;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    Kernel kernel;
 
     @JsonProperty("created_at")
     String createdAt;
@@ -105,11 +108,11 @@ public class Droplet {
         this.status = status;
     }
 
-    public String getKernel() {
+    public Kernel getKernel() {
         return kernel;
     }
 
-    public void setKernel(String kernel) {
+    public void setKernel(Kernel kernel) {
         this.kernel = kernel;
     }
 
@@ -207,5 +210,35 @@ public class Droplet {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+}
+
+class Kernel {
+    private String id;
+    private String name;
+    private String version;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

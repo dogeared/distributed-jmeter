@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -27,28 +28,27 @@ import java.util.stream.Collectors;
 @Service
 public class DOAPIServiceImpl implements DOAPIService {
 
-    @Value("#{ @environment['do.token'] }")
-    protected String doToken;
-
-    @Value("#{ @environment['ssh.public.key.fingerprint'] }")
-    protected String sshKeyFingerprint;
-
-    @Value("#{ @environment['do.config.file'] }")
-    protected String doConfigFile;
-
-    @Value("#{ @environment['do.firewall.id'] }")
-    protected String doFirewallId;
-
     private final SSHClientService sshClientService;
 
-    @Autowired
-    public DOAPIServiceImpl(final SSHClientService sshClientService) {
-        this.sshClientService = sshClientService;
-    }
+    protected String doToken;
+    protected String sshKeyFingerprint;
+    protected String doConfigFile;
+    protected String doFirewallId;
 
-    private static final String DO_API_BASE_URL = "https://api.digitalocean.com/v2";
-    private static final String DO_DROPLET_ENDPOINT = "/droplets";
-    private static final String DO_FIREWALL_ENDPOINT = "/firewalls";
+    @Autowired
+    public DOAPIServiceImpl(
+        final SSHClientService sshClientService,
+        @Value("#{ @environment['do.token'] }") String doToken,
+        @Value("#{ @environment['ssh.public.key.fingerprint'] }") String sshKeyFingerprint,
+        @Value("#{ @environment['do.config.file'] }") String doConfigFile,
+        @Value("#{ @environment['do.firewall.id'] }") String doFirewallId
+    ) {
+        this.sshClientService = sshClientService;
+        this.doToken = doToken;
+        this.sshKeyFingerprint = sshKeyFingerprint;
+        this.doConfigFile = doConfigFile;
+        this.doFirewallId = doFirewallId;
+    }
 
     private ObjectMapper mapper = new ObjectMapper();
     private TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
@@ -93,12 +93,12 @@ public class DOAPIServiceImpl implements DOAPIService {
     }
 
     @Override
-    public List<Object> getDropletsAttribute(String attribute) throws IOException {
+    public List<?> getDropletsAttribute(String attribute) throws IOException {
         return getDropletsAttribute(listDroplets().getDroplets(), attribute);
     }
 
     @Override
-    public List<Object> getDropletsAttribute(List<Droplet> droplets, String attribute) {
+    public List<?> getDropletsAttribute(List<Droplet> droplets, String attribute) {
         return droplets.stream().map(elem -> {
             try {
                 return PropertyUtils.getProperty(elem, attribute);
@@ -110,7 +110,7 @@ public class DOAPIServiceImpl implements DOAPIService {
     }
 
     @Override
-    public List<Map<String, Object>> getDropletsAttributes(List<String> attributes) throws IOException {
+    public List<Map<String, ?>> getDropletsAttributes(List<String> attributes) throws IOException {
         return listDroplets().getDroplets().stream().map(elem -> {
             Map<String, Object> attributeMap = new HashMap<>();
             for (String attribute : attributes) {
@@ -133,7 +133,7 @@ public class DOAPIServiceImpl implements DOAPIService {
         }
 
         if (doConfigFile != null) {
-            BufferedReader reader = new BufferedReader(new FileReader(doConfigFile));
+            BufferedReader reader = new BufferedReader(new FileReader(new ClassPathResource(doConfigFile).getFile()));
             StringBuilder userData = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {

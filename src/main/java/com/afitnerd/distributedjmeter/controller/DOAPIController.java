@@ -43,12 +43,12 @@ public class DOAPIController {
     }
 
     @RequestMapping("/droplets_attribute")
-    @ResponseBody List<Object> getDropletsAttribute(@RequestParam String attribute) throws IOException {
+    @ResponseBody List<?> getDropletsAttribute(@RequestParam String attribute) throws IOException {
         return doapiService.getDropletsAttribute(attribute);
     }
 
     @RequestMapping("/droplets_attributes")
-    @ResponseBody List<Map<String, Object>> getDropletsAttributes(@RequestParam List<String> attributes) throws IOException {
+    @ResponseBody List<Map<String, ?>> getDropletsAttributes(@RequestParam List<String> attributes) throws IOException {
         return doapiService.getDropletsAttributes(attributes);
     }
 

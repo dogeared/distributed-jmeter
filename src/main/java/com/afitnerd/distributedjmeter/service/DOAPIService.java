@@ -11,15 +11,19 @@ import java.util.Map;
 
 public interface DOAPIService {
 
+    static final String DO_API_BASE_URL = "https://api.digitalocean.com/v2";
+    static final String DO_DROPLET_ENDPOINT = "/droplets";
+    static final String DO_FIREWALL_ENDPOINT = "/firewalls";
+
     DropletResponse listDroplets() throws IOException;
     DropletResponse listDroplets(String tagName) throws IOException;
     List<String> getDropletIps() throws IOException;
     List<String> getDropletIps(String tagName) throws IOException;
     List<String> getDropletIps(List<Droplet> droplets);
-    List<Object> getDropletsAttribute(String attribute) throws IOException;
-    List<Object> getDropletsAttribute(List<Droplet> droplets, String attribute);
+    List<?> getDropletsAttribute(String attribute) throws IOException;
+    List<?> getDropletsAttribute(List<Droplet> droplets, String attribute);
+    List<Map<String, ?>> getDropletsAttributes(List<String> attributes) throws IOException;
     DropletResponse createDroplets(CreateDropletRequest request) throws IOException;
-    List<Map<String, Object>> getDropletsAttributes(List<String> attributes) throws IOException;
     void addDropletsToFirewall(List<Object> dropletIds) throws IOException;
     void addDropletsToFirewallByTags(List<String> tags) throws IOException;
 }
