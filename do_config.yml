@@ -2,6 +2,6 @@
 runcmd:
   - apt-get update
   - apt install -y openjdk-8-jre-headless
-  - wget http://mirror.cc.columbia.edu/pub/software/apache/jmeter/binaries/apache-jmeter-3.2.tgz
-  - tar xvfz apache-jmeter-3.2.tgz
-  - echo "export PATH=$PATH:/apache-jmeter-3.2/bin" >> /root/.bashrc
+  - wget http://mirror.cc.columbia.edu/pub/software/apache/jmeter/binaries/apache-jmeter-4.0.tgz
+  - tar xvfz apache-jmeter-4.0.tgz
+  - echo "export PATH=$PATH:/apache-jmeter-4.0/bin" >> /root/.bashrc

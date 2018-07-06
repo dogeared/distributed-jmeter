@@ -17,6 +17,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -133,7 +134,7 @@ public class DOAPIServiceImpl implements DOAPIService {
         }
 
         if (doConfigFile != null) {
-            BufferedReader reader = new BufferedReader(new FileReader(new ClassPathResource(doConfigFile).getFile()));
+            BufferedReader reader = new BufferedReader(new FileReader(new File(doConfigFile)));
             StringBuilder userData = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {

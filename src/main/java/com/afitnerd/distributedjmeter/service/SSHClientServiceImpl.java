@@ -61,7 +61,12 @@ public class SSHClientServiceImpl implements SSHClientService {
                 session.disconnect();
                 return ret.toString();
             } catch (IOException | JSchException e) {
-                log.error("Caught ssh exception. Will retry. - {}", e.getMessage());
+                log.error("Caught exception during ssh command. Will retry. - {}", e.getMessage());
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ie) {
+                    log.error("Interrupted during sleep: {}", ie.getMessage());
+                }
             }
         } while (retry++ < MAX_RETRIES);
         log.error("retry max {} exceeded. Unable to continue.", MAX_RETRIES);
@@ -126,7 +131,12 @@ public class SSHClientServiceImpl implements SSHClientService {
                 session.disconnect();
                 return;
             } catch (IOException | JSchException e) {
-                log.error("Caught ssh exception. Will retry. - {}", e.getMessage());
+                log.error("Caught exception during scp. Will retry. - {}", e.getMessage());
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ie) {
+                    log.error("Interrupted during sleep: {}", ie.getMessage());
+                }
             }
         } while (retry++ < MAX_RETRIES);
         log.error("retry max {} exceeded. Unable to continue.", MAX_RETRIES);
