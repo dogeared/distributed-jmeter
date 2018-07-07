@@ -1,6 +1,5 @@
 package com.afitnerd.distributedjmeter.model.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;

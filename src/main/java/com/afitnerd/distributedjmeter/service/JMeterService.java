@@ -11,6 +11,7 @@ public interface JMeterService {
 
     String JMETER_SERVER_BASE = "jmeter-server";
     String JMETER_CLIENT = "jmeter-client";
+    Float JVM_MEMORY = .60f;
 
     List<DropletResponse> createJMeterServerDroplets(int numDroplets, String size);
     DropletResponse createJMeterClientDroplet(String size);

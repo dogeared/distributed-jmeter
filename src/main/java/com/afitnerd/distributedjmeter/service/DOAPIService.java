@@ -3,7 +3,6 @@ package com.afitnerd.distributedjmeter.service;
 import com.afitnerd.distributedjmeter.model.request.CreateDropletRequest;
 import com.afitnerd.distributedjmeter.model.response.Droplet;
 import com.afitnerd.distributedjmeter.model.response.DropletResponse;
-import com.jcraft.jsch.JSchException;
 
 import java.io.IOException;
 import java.util.List;

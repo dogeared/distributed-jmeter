@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.afitnerd.distributedjmeter.util.JMeterCommandUtil.LOCAL_TEST_PLAN_NAME;
+
 @Service
 public class JMeterServiceImpl implements JMeterService {
 
@@ -60,7 +62,7 @@ public class JMeterServiceImpl implements JMeterService {
 
     private DropletResponse createJMeterDropletBase(List<String> names, String tag, String size) {
         CreateDropletRequest request = CreateDropletRequestBuilder.builder()
-            .region("nyc3")
+            .region("nyc1")
             .size(size)
             .image(doImageId)
             .backups(false)
@@ -134,13 +136,13 @@ public class JMeterServiceImpl implements JMeterService {
     public String jMeterServersStart() throws IOException, JSchException {
         DropletResponse dropletResponse = doapiService.listDroplets(JMETER_SERVER_BASE);
         long dropletMemory = dropletResponse.getDroplets().get(0).getMemory();
-        int jvmMemory = (int)(dropletMemory*0.75f);
+        int jvmMemory = (int)(dropletMemory*JVM_MEMORY);
 
         List<String> ips = doapiService.getDropletIps(dropletResponse.getDroplets());
 
         for (String ip : ips) {
             String command = JMeterCommandUtil.serverCommand(jvmMemory, ip);
-            int numTries = attemptSshCommand(command, ip);
+            int numTries = startJmeter(command, ip);
             if (numTries >= MAX_RETRIES) {
                 log.error("jmeter server not started after {} tries for: {}", MAX_RETRIES, ip);
             }
@@ -161,10 +163,9 @@ public class JMeterServiceImpl implements JMeterService {
 
         int numTries = 0;
         do {
-            String fileName = jMeterTestPlanFile.substring(jMeterTestPlanFile.lastIndexOf("/") + 1);
-            sshClientService.scp(jMeterTestPlanFile, fileName, "root", localIp);
-            String result = sshClientService.command("ls /root/" + fileName, "root", localIp);
-            if (result != null && result.contains(fileName)) {
+            sshClientService.scp(jMeterTestPlanFile, LOCAL_TEST_PLAN_NAME, "root", localIp);
+            String result = sshClientService.command("ls /root/" + LOCAL_TEST_PLAN_NAME, "root", localIp);
+            if (result != null && result.contains(LOCAL_TEST_PLAN_NAME)) {
                 break;
             }
             try {
@@ -190,11 +191,11 @@ public class JMeterServiceImpl implements JMeterService {
         }
         Droplet droplet = dropletResponse.getDroplets().get(0);
         long dropletMemory = droplet.getMemory();
-        int jvmMemory = (int)(dropletMemory*0.75f);
+        int jvmMemory = (int)(dropletMemory*JVM_MEMORY);
         String localIp = droplet.getDropletNetworks().getV4s().get(0).getIpAddress();
 
         String command = JMeterCommandUtil.clientCommand(jvmMemory, remoteIps, localIp);
-        int numTries = attemptSshCommand(command, localIp);
+        int numTries = startJmeter(command, localIp);
         if (numTries >= MAX_RETRIES) {
             log.error("jmeter client not started after {} tries for: {}", MAX_RETRIES, localIp);
             return null;
@@ -202,18 +203,18 @@ public class JMeterServiceImpl implements JMeterService {
         return localIp;
     }
 
-    private int attemptSshCommand(String command, String ip) throws IOException, JSchException {
+    private int startJmeter(String command, String ip) throws IOException, JSchException {
         int numTries = 0;
         do {
             sshClientService.command(command, "root", ip);
-            String result = sshClientService.command("ps aux | grep " + JMeterCommandUtil.JMETER_HOME, "root", ip);
-            if (result != null && result.split("\n").length > 2) {
-                break;
-            }
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 log.error("Failed to sleep: {}", e.getMessage(), e);
+            }
+            String result = sshClientService.command("ps aux | grep client.rmi.localport | grep -v grep", "root", ip);
+            if (result != null && result.split("\n").length > 2) {
+                break;
             }
         } while (numTries++ < MAX_RETRIES);
         return numTries;

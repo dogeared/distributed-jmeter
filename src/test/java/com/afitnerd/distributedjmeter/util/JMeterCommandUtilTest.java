@@ -12,10 +12,10 @@ public class JMeterCommandUtilTest {
         assertThat(
             JMeterCommandUtil.clientCommand(384, "1.1.1.1,2.2.2.2", "3.3.3.3"),
             is(
-            "PATH=$PATH:/apache-jmeter-4.0/bin JVM_ARGS=\"-Xms384m -Xmx384m\" " +
-                "nohup jmeter -n -t /root/IPIFY.jmx -l /root/log_remote.jtl -R1.1.1.1,2.2.2.2 " +
-                "-Djava.rmi.server.hostname=3.3.3.3 -Dclient.rmi.localport=4040 -Dserver.rmi.localport=4040 " +
-                "-Dserver.rmi.ssl.disable=true > /root/jmeter-client.log 2>&1 &"
+                "PATH=$PATH:/apache-jmeter/bin JVM_ARGS=\"-Xms384m -Xmx384m\" " +
+                "nohup jmeter -n -t /root/test_plan.jmx -l /root/log_remote.jtl -R1.1.1.1,2.2.2.2 " +
+                "-Dclient.continue_on_fail=true -Djava.rmi.server.hostname=3.3.3.3 -Dserver.rmi.ssl.disable=true " +
+                "-Dclient.rmi.localport=4040 -Dserver.rmi.localport=4040 > /tmp/jmeter.log 2>&1 &"
             )
         );
     }
@@ -25,9 +25,9 @@ public class JMeterCommandUtilTest {
         assertThat(
             JMeterCommandUtil.serverCommand(384, "3.3.3.3"),
             is(
-            "PATH=$PATH:/apache-jmeter-4.0/bin JVM_ARGS=\"-Xms384m -Xmx384m\" " +
-                "nohup jmeter-server -Djava.rmi.server.hostname=3.3.3.3 -Dclient.rmi.localport=4040 " +
-                "-Dserver.rmi.localport=4040 -Dserver.rmi.ssl.disable=true > /tmp/jmeter-server.log 2>&1 &"
+                "PATH=$PATH:/apache-jmeter/bin JVM_ARGS=\"-Xms384m -Xmx384m\" " +
+                "nohup jmeter-server -Djava.rmi.server.hostname=3.3.3.3 -Dserver.rmi.ssl.disable=true " +
+                "-Dclient.rmi.localport=4040 -Dserver.rmi.localport=4040 > /tmp/jmeter.log 2>&1 &"
             )
         );
     }
